@@ -1,0 +1,93 @@
+6
+ 5	smog
+ 10 buck
+ 12 sad
+ 20 spite
+ 15 spit
+ 7	spy
+
+
+	public ArrayList<String> getTopK(String prefix, int k) {
+		Node x = getNodeAt(prefix);
+		if (x == null) {
+			return new ArrayList<String>();
+		}
+		PriorityQueue<Node> minQ = new PriorityQueue<Node>(k,
+				new ValueComparison());
+		HashMap<Node, String> mapNodePrefix = new HashMap<Node, String>();
+		mapNodePrefix.put(x, prefix);
+		PriorityQueue<Node> maxQ = new PriorityQueue<Node>(k,
+				new MaxComparison());
+		minQ = getTopK(x.middle, maxQ, minQ, mapNodePrefix, k, prefix);
+		ArrayList<String> matching = new ArrayList<String>();
+		Iterator<Node> searchOutputs = minQ.iterator();
+		while (searchOutputs.hasNext()) {
+			Node next = searchOutputs.next();
+			String nextToAdd = mapNodePrefix.get(next);
+			matching.add(nextToAdd);
+		}
+		if (x.exists) {
+			int size = matching.size() - 1;
+			matching.remove(size);
+		}
+		return matching;
+	}
+
+	/**
+	 * Returns a tree set of the top k words with the same prefix
+	 * 
+	 * @param node
+	 * @param queue
+	 * @param topK
+	 * @param mapNodePrefix
+	 * @param k
+	 * @param prefix
+	 * @return
+	 */
+	private PriorityQueue<Node> getTopK(Node node, PriorityQueue<Node> maxQ,
+			PriorityQueue<Node> topK, HashMap<Node, String> mapNodePrefix,
+			int k, String prefix) {
+
+		if (node != null) {
+			if (node.exists) {
+				topK.add(node);
+				mapNodePrefix.put(node, prefix + "" + node.current);
+			}
+
+			if (node.middle != null) {
+				maxQ.add(node.middle);
+				mapNodePrefix.put(node.middle, prefix + "" + node.current);
+			}
+
+			if (node.left != null) {
+				maxQ.add(node.left);
+				mapNodePrefix.put(node.left, prefix);
+			}
+
+			if (node.right != null) {
+				maxQ.add(node.right);
+				mapNodePrefix.put(node.right, prefix);
+			}
+
+			if (maxQ.isEmpty()) {
+				return topK;
+			}
+
+			if (topK.size() >= k) {
+				if (topK.peek().value < maxQ.peek().value) {
+					Node nextToLookAt = maxQ.remove();
+					String addedPref = mapNodePrefix.get(nextToLookAt);
+					topK = getTopK(nextToLookAt, maxQ, topK, mapNodePrefix, k,
+							addedPref);
+				} else {
+					return topK;
+				}
+			} else {
+				Node nextToLookAt = maxQ.remove();
+				String addedPref = mapNodePrefix.get(nextToLookAt);
+				topK = getTopK(nextToLookAt, maxQ, topK, mapNodePrefix, k,
+						addedPref);
+			}
+		}
+		return topK;
+	}
